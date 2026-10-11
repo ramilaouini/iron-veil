@@ -9,7 +9,7 @@ import { storyRun, arcadeRun, CREDITS } from './story.js';
 import { prettyKey, ACTIONS, ACTION_LABELS } from '../input/input.js';
 
 export const MODES = [
-  { id: 'story', label: 'Story Mode', desc: 'Three rivals and the Veil Sovereign. Dialogue, boss fight and a character ending.' },
+  { id: 'story', label: 'Story Odyssey', desc: 'Full platformer campaign! 4 epic sectors, quests, mobs, mini-bosses, Orin the Guide, and final bosses!' },
   { id: 'arcade', label: 'Arcade', desc: 'Four random challengers, then the boss. Clearing Arcade unlocks cosmetics.' },
   { id: 'versus', label: 'Versus CPU', desc: 'Pick any two fighters, any arena and a difficulty.' },
   { id: 'twoPlayer', label: 'Local 2 Player', desc: 'Two players, one keyboard (or two gamepads).' },
@@ -39,7 +39,7 @@ export function registerScreens(ui) {
   const g = ui.game, S = g.save;
   const flow = ui.flow = { mode: 'versus', p1: { id: 'kael', skin: 0 }, p2: { id: 'nyra', skin: 0 }, stage: 0, difficulty: S.settings.difficulty, run: null, i: 0 };
   const equipped = id => S.equipped(id);
-  const toMenu = () => { g.endMatch(); flow.run = null; ui.go('menu'); };
+  const toMenu = () => { g.endMatch(); if (g.endAdventure) g.endAdventure(); flow.run = null; ui.go('menu'); };
   ui.toMenu = toMenu;
 
   // ------------------------------------------------------------------ flow helpers
@@ -64,7 +64,8 @@ export function registerScreens(ui) {
     else launch();
   }
   ui.startMode = id => {
-    if (['story', 'arcade', 'versus', 'twoPlayer', 'training'].includes(id)) { flow.mode = id; flow.run = null; ui.go('select', { mode: id }); }
+    if (id === 'story') { ui.go('storySelect'); return; }
+    if (['arcade', 'versus', 'twoPlayer', 'training'].includes(id)) { flow.mode = id; flow.run = null; ui.go('select', { mode: id }); }
     else ui.go(id === 'settings' ? 'settings' : id, { from: 'menu' });
   };
   ui.onMatchEnd = res => ui.push('result', { res });

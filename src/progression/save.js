@@ -31,6 +31,11 @@ export function defaultSave() {
     stats: { played: 0, won: 0, lost: 0, streak: 0, bestStreak: 0, winsBy: {}, playsBy: {}, maxCombo: 0, parries: 0, counters: 0, trainingSeconds: 0, arcadeClears: {}, storyClears: {}, totalDamage: 0 },
     skins: { unlocked, equipped },
     achievements: {},
+    storyHero: 'kael',
+    storyUnlocked: 1,
+    storyShards: 0,
+    storyScores: {},
+    storyUpgrades: { maxHpLvl: 0, atkLvl: 0, doubleJump: false, meterRegen: false, vampire: false },
   };
 }
 
@@ -63,6 +68,11 @@ export function validateSave(raw) {
       d.skins.equipped[c.id] = d.skins.unlocked[c.id].includes(eq) ? eq : 0;
     }
     if (raw.achievements && typeof raw.achievements === 'object') for (const a of ACHIEVEMENTS) if (raw.achievements[a.id] === true) d.achievements[a.id] = true;
+    d.storyHero = typeof raw.storyHero === 'string' ? raw.storyHero : 'kael';
+    d.storyUnlocked = typeof raw.storyUnlocked === 'number' ? Math.max(1, raw.storyUnlocked) : 1;
+    d.storyShards = typeof raw.storyShards === 'number' ? Math.max(0, raw.storyShards) : 0;
+    d.storyScores = raw.storyScores && typeof raw.storyScores === 'object' ? raw.storyScores : {};
+    d.storyUpgrades = raw.storyUpgrades && typeof raw.storyUpgrades === 'object' ? raw.storyUpgrades : { maxHpLvl: 0, atkLvl: 0, doubleJump: false, meterRegen: false, vampire: false };
     return d;
   } catch { return defaultSave(); }
 }

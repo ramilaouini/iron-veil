@@ -2,6 +2,7 @@ import { Game } from './game/game.js';
 import { UI } from './ui/ui.js';
 import { registerScreens } from './ui/screens_a.js';
 import { registerScreensB, applyAccessibility } from './ui/screens_b.js';
+import { registerAdventureScreens } from './ui/adventure_screens.js';
 import { ACTIONS } from './input/input.js';
 
 const q = new URLSearchParams(location.search);
@@ -13,7 +14,7 @@ try {
   game.onError = showFatal;
   const ui = new UI(game, document.getElementById('ui'), document.getElementById('toasts'));
   window.ui = ui;
-  registerScreens(ui); registerScreensB(ui); applyAccessibility(game);
+  registerScreens(ui); registerScreensB(ui); registerAdventureScreens(ui); applyAccessibility(game);
   window.addEventListener('keydown', e => {
     if (e.code === 'Tab' || ((e.code === 'Enter' || e.code === 'Space') && e.target.tagName === 'BUTTON')) e.preventDefault();
     if (e.code === 'F3' && game.dev) { e.preventDefault(); game.toggleDebug(); }

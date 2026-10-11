@@ -1,5 +1,5 @@
-// Procedural audio: every sound is synthesized with Web Audio (no files, no network).
 // AudioManager = context/buses/volume/throttling + SFX library. MusicEngine = generative per-mood music + ambience.
+import { SFX_REGISTRY, TRACK_REGISTRY, registerAdventureAudio } from '../story/adventure_audio.js';
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 
@@ -27,6 +27,7 @@ export class AudioManager {
       const d = this.noiseBuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
       this.ready = true; this.applyVolumes();
       this.music = new MusicEngine(this);
+      registerAdventureAudio(this);
       return true;
     } catch (e) { console.warn('Audio init failed', e); return false; }
   }
@@ -70,7 +71,7 @@ export class AudioManager {
   // Throttled playback: limits concurrent voices per sound and minimum spacing between repeats.
   play(name, opt = {}) {
     if (!this.ready || this.muted || this.ctx.state !== 'running') return;
-    const def = SFX[name]; if (!def) { console.warn('Unknown sfx', name); return; }
+    const def = SFX[name] || SFX_REGISTRY[name]; if (!def) { console.warn('Unknown sfx', name); return; }
     const now = performance.now(), last = this.lastPlayed.get(name) || 0;
     if (now - last < (def.gap ?? 35)) return;
     const n = this.active.get(name) || 0; if (n >= (def.max ?? 3)) return;
@@ -147,7 +148,7 @@ class MusicEngine {
     const am = this.am; if (!am.ready) return;
     if (this.mood === mood && this.timer) return;
     this.stop(0.6);
-    const ctx = am.ctx; this.mood = mood; this.cfg = TRACKS[mood] || TRACKS.menu;
+    const ctx = am.ctx; this.mood = mood; this.cfg = TRACKS[mood] || TRACK_REGISTRY[mood] || TRACKS.menu;
     this.bus = ctx.createGain(); this.bus.gain.value = 0.0001; this.bus.gain.linearRampToValueAtTime(1, ctx.currentTime + 1.2); this.bus.connect(am.musicBus);
     this.step = 0; this.bar = 0; this.next = ctx.currentTime + 0.1; this.state = {};
     this.timer = setInterval(() => this._schedule(), 70);

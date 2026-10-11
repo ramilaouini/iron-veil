@@ -16,6 +16,7 @@ import { HUD } from '../ui/hud.js';
 import { Actor } from './preview.js';
 import { ParallaxCamera } from '../render/parallax.js';
 import { CinematicsManager } from '../render/cinematics.js';
+import { AdventureMode } from '../story/adventure.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const mixWhite = (hex, k) => { const h = hex.replace('#', ''); const n = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); return `rgb(${n.map(v => Math.round(v + (255 - v) * k)).join(',')})`; };
@@ -40,7 +41,7 @@ export class Game {
     this.cinematics = new CinematicsManager(this);
     this.cam = { x: CFG.STAGE_W / 2, zoom: 1, parallax: this.parallax };
     this.view = 'bg'; this.bg = { stage: 2, actors: [null, null], zoom: 1, camX: CFG.STAGE_W / 2 };
-    this.match = null; this.ai = [null, null]; this.cfg = null; this.paused = false;
+    this.match = null; this.adventure = null; this.ai = [null, null]; this.cfg = null; this.paused = false;
     this.time = 0; this.acc = 0; this.last = 0; this.frame = 0; this.errors = 0; this.running = false;
     this.dummy = 'stand'; this.recBuf = []; this.recording = false; this.playIdx = 0;
     this.afterglow = [0, 0]; this.matchClock = 0; this.fps = 60; this._fpsT = 0; this._fpsN = 0;
@@ -128,12 +129,39 @@ export class Game {
     this.match = null; this.paused = false; this.view = 'bg'; this.input.enabledGameplay = false; this.input.clear(); this.fx.clear(); this.hud.reset(); this.ai = [null, null];
   }
 
+  startAdventure(opts) {
+    this.endMatch(true);
+    this.adventure = new AdventureMode(this, opts);
+    this.view = 'adventure';
+    this.input.enabledGameplay = true;
+    this.input.clear();
+    this.paused = false;
+    this.adventure.onLevelVictory = stats => {
+      if (window.ui) window.ui.go('storyVictory', { stats });
+    };
+    this.adventure.onGameOver = stats => {
+      if (window.ui) window.ui.go('storyGameOver', { stats });
+    };
+    return this.adventure;
+  }
+
+  endAdventure() {
+    this.adventure = null;
+    this.view = 'bg';
+    this.input.enabledGameplay = false;
+    this.input.clear();
+  }
+
   restartMatch() { if (this.cfg) { const c = this.cfg; this.startMatch({ ...c }); } }
 
   // ---------------------------------------------------------------- per-frame sim
   tick() {
     this.frame++;
     if (this.view === 'bg') { this._tickBg(); return; }
+    if (this.view === 'adventure' && this.adventure) {
+      if (!this.paused) this.adventure.step();
+      return;
+    }
     const m = this.match; if (!m) return;
     if (this.paused) return;
     // slow motion: during the KO slow window every other frame is simulated
@@ -366,7 +394,8 @@ export class Game {
   render() {
     const ctx = this.ctx, k = this.pxk;
     ctx.setTransform(k, 0, 0, k, 0, 0);
-    if (this.view === 'fight' && this.match) this._renderFight(ctx);
+    if (this.view === 'adventure' && this.adventure) this.adventure.render(ctx);
+    else if (this.view === 'fight' && this.match) this._renderFight(ctx);
     else this._renderBg(ctx);
     if (this.dev) this._devOverlay(ctx);
   }
