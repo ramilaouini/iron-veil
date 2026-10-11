@@ -1,0 +1,12 @@
+import { Match } from '../src/combat/match.js';
+import { ROSTER } from '../src/characters/roster.js';
+import { EMPTY_INPUT } from '../src/combat/fighter.js';
+const m = new Match({ p1: { def: ROSTER[0] }, p2: { def: ROSTER[1] }, strict: true, record: true });
+const I = o => ({ ...EMPTY_INPUT, ...o });
+for (let i = 0; i < 200; i++) m.step([I({}), I({})]);
+console.log('phase', m.phase, m.f[0].x, m.f[1].x);
+for (let i = 0; i < 60; i++) m.step([I({ right: true }), I({})]);
+console.log('after walk', m.f[0].x.toFixed(1), m.f[1].x.toFixed(1), m.f[0].state);
+m.step([I({ lp: true }), I({})]);
+for (let i = 0; i < 20; i++) m.step([I({}), I({})]);
+console.log('hp', m.f[1].hp, m.log.filter(e => e.type === 'hit').length, 'hits');

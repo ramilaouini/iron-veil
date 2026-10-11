@@ -1,0 +1,21 @@
+<!doctype html><meta charset="utf-8"><body style="margin:0;background:#000">
+<canvas id="c" width="1280" height="720"></canvas>
+<script type="module">
+import { STAGES, drawGrade } from '../src/stages/stages.js';
+import { FighterRenderer } from '../src/render/fighter_renderer.js';
+import { ROSTER } from '../src/characters/roster.js';
+import { Fighter } from '../src/combat/fighter.js';
+const c = document.getElementById('c'), ctx = c.getContext('2d'), st = STAGES.build(), R = new FighterRenderer();
+window.show = (i, t=60, zoom=1) => {
+  const s = st[i], cam = { x: 950, zoom };
+  for (let k = 0; k < 3; k++) s.update(t+k, null);
+  ctx.clearRect(0,0,1280,720);
+  s.drawBack(ctx, cam, t); s.drawFloor(ctx, cam, t);
+  const fy = 360 + (610-360)*zoom;
+  const a = new Fighter(0, ROSTER[i], 0); a.reset(0,1); const b = new Fighter(1, ROSTER[(i+3)%6], 0); b.reset(0,-1);
+  R.draw(ctx, a, 640-130*zoom, fy, t); R.draw(ctx, b, 640+130*zoom, fy, t);
+  s.drawFront(ctx, cam, t); drawGrade(s, ctx);
+  document.title='ok';
+};
+window.show(0);
+</script>

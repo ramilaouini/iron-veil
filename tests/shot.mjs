@@ -1,0 +1,13 @@
+import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
+import { createServer } from 'node:http'; import { readFile } from 'node:fs/promises'; import { extname, join } from 'node:path';
+const root = new URL('..', import.meta.url).pathname;
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
+const srv = createServer(async (q, s) => { try { const p = q.url.split('?')[0]; const d = await readFile(join(root, p === '/' ? 'index.html' : p)); s.writeHead(200, { 'Content-Type': types[extname(p)] || 'text/plain' }); s.end(d); } catch { s.writeHead(404); s.end(); } }).listen(0);
+const port = srv.address().port;
+const [page, out, js] = process.argv.slice(2);
+const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 1800, height: 1000 } });
+const logs = []; pg.on('console', m => logs.push(m.type() + ': ' + m.text())); pg.on('pageerror', e => logs.push('PAGEERROR: ' + e.message));
+await pg.goto(`http://localhost:${port}/${page}`); await pg.waitForTimeout(800);
+if (js) await pg.evaluate(js);
+await pg.waitForTimeout(300);
+await pg.screenshot({ path: out }); console.log(logs.join('\n') || 'no console output'); await b.close(); srv.close();

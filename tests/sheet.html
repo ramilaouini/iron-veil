@@ -1,0 +1,39 @@
+<!doctype html><meta charset="utf-8"><body style="margin:0;background:#202028">
+<canvas id="c" width="1800" height="1000"></canvas>
+<script type="module">
+import { ROSTER } from '../src/characters/roster.js';
+import { Fighter } from '../src/combat/fighter.js';
+import { FighterRenderer } from '../src/render/fighter_renderer.js';
+const c = document.getElementById('c'), ctx = c.getContext('2d'), R = new FighterRenderer();
+const clips = ['idle','walkF','crouchHold','blockS','hit','knockdown','victory','jumpUp'];
+const moves = ['lp','hp','hk','sp1','ult'];
+window.render = (ci=0, skin=0) => {
+  ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle = '#2a2a33'; ctx.fillRect(0,0,1800,1000);
+  const d = ROSTER[ci];
+  const all = [...clips.map(n=>['c',n]), ...['lp','hp','lk','hk','cl','ck','up','sw','ap','th','sp1','sp2','ult'].map(n=>['m',n])];
+  all.forEach(([kind,n], i) => {
+    const col = i % 7, row = Math.floor(i / 7);
+    const x = 130 + col * 250, y = 290 + row * 320;
+    const g = new Fighter(0, d, skin); g.reset(0,1);
+    if (kind==='c') {
+      g.anim = { name: n, frame: 14 }; g.t = 14;
+      if (n === 'walkF') { g.state = 'WALK_FORWARD'; g.walkDist = 60; g.vx = 3; }
+      if (n === 'jumpUp') { g.y = 60; g.vy = 8; g.state='JUMPING'; }
+      if (n === 'hit') g.state='HITSTUN';
+    } else {
+      const mv = d.moves[n]; g.move = mv; g.moveFrame = mv.startup + 1; g.state = mv.rank===4?'ULTIMATE':mv.rank===3?'SPECIAL':'ATTACK_ACTIVE'; g.crouching = !!mv.crouch;
+      g.anim = { name: mv.anim, frame: g.moveFrame };
+      if (mv.air) g.y = 50;
+    }
+    g._pose = null;
+    ctx.fillStyle = '#555'; ctx.fillRect(x-70, y, 140, 2);
+    ctx.fillStyle = '#9ab'; ctx.font='14px monospace'; ctx.fillText(n, x-60, y+22);
+    R.draw(ctx, g, x, y - g.y, 40, {});
+    if (kind==='m') { const mv=g.move; const b = g.attackBox(mv.box); if (b && mv.box.w) { ctx.strokeStyle='#f44'; ctx.lineWidth=1; ctx.strokeRect(x + b.l, y - g.y*0 - b.top, b.r-b.l, b.top-b.bottom); } }
+    // hurtbox
+    const hb = g.hurtBox(); ctx.strokeStyle='#4f4'; ctx.lineWidth=1; ctx.strokeRect(x+hb.l, y-hb.top-g.y+g.y, hb.r-hb.l, hb.top-hb.bottom);
+  });
+  document.title = 'done';
+};
+window.render(0);
+</script>

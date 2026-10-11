@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><body style="margin:0;background:#000;overflow:hidden">
+<canvas id="c"></canvas>
+<script type="module">
+import { Game } from '../src/game/game.js';
+const g = new Game(document.getElementById('c'), { dev: true });
+window.g = g; g.start();
+const q = new URLSearchParams(location.search);
+g.startMatch({ mode: q.get('mode') || 'versus', p1: { id: q.get('p1') || 'kael' }, p2: { id: q.get('p2') || 'nyra' }, stage: +(q.get('stage') || 0), difficulty: q.get('d') || 'normal' });
+</script>
